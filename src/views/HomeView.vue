@@ -9,18 +9,42 @@
 
           <div class="card-body bg-pokebola bg-normal">
             <div class="pokemon">
-              <img src="@/assets/imgs/pokemons/001.png" v-show="exibir">
+              <transition 
+                
+                enter-active-class="animate__animated animate__lightSpeedInLeft" 
+                leave-active-class="animate__animated animate__lightSpeedOutRight"
+              >
+                <img :src="require(`@/assets/imgs/pokemons/${pokemon.imagem}`)" v-if="exibir"/>
+              </transition> 
+              <div class="evolucoes">
+                <transition name="fade" v-for="evolucao in pokemon.evolucoes" :key="evolucao">
+                  <img :src="require(`@/assets/imgs/pokemons/${evolucao.toString().padStart(3, '0')}.png`)" v-if="exibirEvolucoes"/>
+                </transition> 
+                
+              </div>
             </div>
           </div>
 
           <div class="card-footer">
-         
-          <nav class="nav nav-pills nav-fill">
-            <!-- menu de navegação -->
-          </nav>
+            <nav class="nav nav-pills nav-fill">
+              <router-link class="nav-item nav-link text-white" :to="{name: 'sobre'}" exact-active-class="active">Sobre</router-link>
+              <router-link class="nav-item nav-link text-white" :to="{name: 'habilidades'}" exact-active-class="active">Habilidades</router-link>
+              <router-link class="nav-item nav-link text-white" :to="{name: 'status'}" exact-active-class="active">Status</router-link>
 
-          <div class="detalhes">
+            <!-- menu de navegação -->
+            </nav>
+
+          <div class="detalhes">  
             <!-- exibe dados de acordo com o menu de navegação -->
+            <router-view v-slot="{ Component }" 
+              :pokemon="pokemon"
+              @adicionarHabilidade="addHabilit"
+              @removerHabilidade="removeHabilidade"
+            >
+              <transition enter-active-class="animate__animated animate__bounceInUp">
+                <component :is="Component" />
+              </transition>
+            </router-view> 
           </div>
 
           </div>
@@ -54,30 +78,108 @@
           <div class="pokedex-catalogo">
 
             <!-- início listagem dinâmica -->
-            <div class="cartao-pokemon bg-grama" @click="exibir = !exibir">
-              <h1>1 Bulbasaur</h1>
-              <span>grama</span>
+            <div v-for="p in pokemons" :key="p.id" 
+              :class="`cartao-pokemon bg-${p.tipo}`" 
+              @click="analisarPokemon(p)">
+
+              <h1>{{ p.id }} {{ p.nome }}</h1>
+              <span>{{ p.tipo }}</span>
               <div class="cartao-pokemon-img">
-                <img src="@/assets/imgs/pokemons/001.png" >
+                <transition
+                  enter-active-class="animate__animated animate__fadeInDown"
+                  appear
+                >
+                  <img :src="require(`@/assets/imgs/pokemons/${p.imagem}`)" >
+                </transition>
               </div>
             </div>
             <!-- fim listagem dinâmica -->
-
+            
           </div>
+          
         </div>
       </div>
       <!-- fim lado direito -->
-
+      
     </div>
   </div>
 </template>
 
 <script>
+
+import apiMixins from '@/apiMixins.js'
+
 export default {
   name: 'HomeView',
+  mixins: [apiMixins],
   data: ()=>({
     exibir: false,
-  })
+    exibirEvolucoes: false,
+    pokemon: {},
+    pokemons: []
+  }),
+  methods:{
+    addHabilit(habilidade){
+      if(this.pokemon.habilidades){
+      
+        this.pokemon.habilidades.push(habilidade)
+      
+      }
+    },
+
+    removeHabilidade(index){
+      if(this.pokemon.habilidades[index]){
+
+        this.pokemon.habilidades.splice(index, 1)
+
+      }
+    },
+    
+    analisarPokemon(p){
+
+      let pokemonAnalisado = false
+
+      if((this.pokemon.id != p.id)&& this.exibir == true){
+
+        setTimeout(()=>{
+          this.analisarPokemon(p)
+        },1000)
+
+        pokemonAnalisado = true
+      }
+
+      this.exibir = !this.exibir
+      this.pokemon = p
+      this.exibirEvolucoes = !this.exibirEvolucoes
+
+
+      if(!this.exibir && !pokemonAnalisado){
+        this.pokemon = {}
+      }
+    }
+  },
+  created(){
+    fetch('http://localhost:3000/pokemons')
+      .then(response => {
+        return response.json()
+      })
+      .then(data=>{
+        this.pokemons = data
+      })
+
+      this.get()
+      /*
+      const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=150');
+        
+                const data = await response.json();
+        
+                const { name, id, sprites, stats, abilities } = data;
+        
+                const pokemon = { name, id, sprites, stats, abilities };
+        
+                console.log(pokemon)*/
+      
+  }
 }
 </script>
 
@@ -88,6 +190,7 @@ body {
 </style>
 
 <style scoped>
+@import '~@/assets/css/animations.css';
 .pokedex {
   padding: 20px;
   background-color: #ffffff;
@@ -138,7 +241,6 @@ body {
 .cartao-pokemon img {
     max-width:60%;
     max-height:60%;
-    float: right;
 }
 
 .bg-grama {
@@ -184,6 +286,21 @@ body {
 
 .detalhes {
   margin: 20px 30px 20px 30px;
+}
+
+.evolucoes{
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  height: 70px;
+  margin: 5px 0px;
+}
+
+.evolucoes img{
+  cursor: pointer;
+  max-height: 100%;
+  max-width: 100%;
+  float: right;
 }
 
 </style>
