@@ -1,50 +1,68 @@
 
 
+//import axios from'axios'
+
 
 
 export default{
     data:()=>({
-        pokemonsData: []
-
+        pokemonsData: [],
+        poke:{}
     }),
     methods:{
-        /*fetchPokemon: async(pokemon) =>{
-            const apiResponse = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon}`)
-            const data =await apiResponse.json()
-            
-            const { name, id, sprites, stats, abilities } = data;
-            
-            const pokemon = { name: name, id: id, imagens: sprites, status: stats, habilidades: abilities };
-            
-            this.pokemonsData.push(pokemon)
-            console.log(this.pokemonsData)
-        },*/
+        /*
+        buscaPokemons: function(){
+            axios.get('http://pokeapi.co/api/v2/pokemon?limit=150')
+            .then(res =>{
+                
+                console.log(res.data.results);
+                this.pokemons = res.data.results;
+            })
+            .catch(function(err){
+                console.log(err);
+            })
+        }*/
+
         
-        
-        get: async()=>{
+        get(){
 
             for(let i =1; i<150; i++){
             
-                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${i}`);
-            
-                const data = await response.json();
-
+                fetch(`https://pokeapi.co/api/v2/pokemon/${i}`)
+                    .then(res => res.json())
+                    .then(data=>{
+                        const { name, id, stats, abilities } = data
                 
-                let name = data.name;
-                let id = data.id;
-                let sprites = data.sprites;
-                let stats = data.stats;
-                let abilities = data.abilities
+                        const sprites = data.sprites.front_default;
+                        const type = data.types[0].type.name
+                
+                        let pokemons= {name, id, sprites, stats, abilities, type}
+                        this.poke = pokemons 
+                        this.pokemonsData.push(this.poke)
+                    })
+            /*
+                const { name, id, stats, abilities } = data
+                
+                let sprites = response.sprites.front_default;
                 
                 
-                const pokemon = {  name,  id, sprites, stats,  abilities };
+                let pokemons= {name, id, sprites, stats, abilities}
                 
+                
+                this.poke =  pokemons
                
-                this.pokemonsData.splice((1-i),1,pokemon) 
-                
+                console.log(poke)*/
             }
             
-            console.log(this.pokemonsData)
-          }
+            
+        },
+        /*watch:{
+
+            poke(newValue){
+                this.pokemonsData.push(newValue)
+                console.log(this.pokemonsData)
+              },
+        }*/
+        
     }
 }

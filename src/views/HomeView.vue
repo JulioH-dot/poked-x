@@ -62,15 +62,21 @@
 
         <div class="row">
           <div class="col">
-            <select class="form-select">
-              <option>Id crescente</option>
-              <option>Id decrescrente</option>
-              <option>De A - Z</option>
+            <select class="form-select" v-model="ordem">
+              <option value="" disabled>Ordene</option>
+              <option value="1">Id crescente</option>
+              <option value="2">Id decrescrente</option>
+              <option value="3">De A - Z</option>
+              <option value="4">De Z - A</option>
             </select>
           </div>
         
           <div class="col">
-            <input type="text" class="form-control" placeholder="Pesquisar pokémon">
+            <input type="text" 
+              class="form-control" 
+              placeholder="Pesquisar pokémon"
+              v-model="pesquisa" @keyup.enter="pesquisarNome()"
+              >
           </div>
         </div>
 
@@ -78,21 +84,24 @@
           <div class="pokedex-catalogo">
 
             <!-- início listagem dinâmica -->
-            <div v-for="p in pokemons" :key="p.id" 
-              :class="`cartao-pokemon bg-${p.tipo}`" 
-              @click="analisarPokemon(p)">
-
-              <h1>{{ p.id }} {{ p.nome }}</h1>
-              <span>{{ p.tipo }}</span>
-              <div class="cartao-pokemon-img">
-                <transition
-                  enter-active-class="animate__animated animate__fadeInDown"
-                  appear
-                >
-                  <img :src="require(`@/assets/imgs/pokemons/${p.imagem}`)" >
-                </transition>
+            <transition-group name="ordenacao">
+              <div v-for="p in pokemons" :key="p.id" 
+                :class="`cartao-pokemon bg-${p.tipo}`" 
+                @click="analisarPokemon(p)">
+  
+                <h1>{{ p.id }} {{ p.nome }}</h1>
+                <span>{{ p.tipo }}</span>
+                <div class="cartao-pokemon-img">
+                  <transition
+                    enter-active-class="animate__animated animate__fadeInDown"
+                    appear
+                  >
+                    <img :src="require(`@/assets/imgs/pokemons/${p.imagem}`)" >
+                  </transition>
+                </div>
               </div>
-            </div>
+            </transition-group>
+
             <!-- fim listagem dinâmica -->
             
           </div>
@@ -115,10 +124,65 @@ export default {
   data: ()=>({
     exibir: false,
     exibirEvolucoes: false,
+    ordem:'',
     pokemon: {},
-    pokemons: []
+    pokemons: [],
+    pesquisa:''
   }),
+  watch:{
+    
+    ordem(newValue){
+
+      if(newValue == 1){
+        this.pokemons.sort((proximo, atual)=>{
+          if(atual.id < proximo.id){
+            return 1
+          } else if(atual.id > proximo.id){
+            return -1
+          } 
+          return 0
+        })
+      }
+
+      if(newValue == 2){
+        this.pokemons.sort((proximo, atual)=>{
+          if(atual.id < proximo.id){
+            return -1
+          } else if(atual.id > proximo.id){
+            return 1
+          } 
+          return 0
+        })
+      }
+
+      if(newValue == 3){
+        this.pokemons.sort((proximo, atual)=>{
+          let result = proximo.nome.localeCompare(atual.nome)
+          return result
+        })
+      }
+      if(newValue == 4 ){
+        this.pokemons.sort((proximo, atual)=>{
+          let result = atual.nome.localeCompare(proximo.nome)
+          
+
+
+          return result 
+        })
+      }
+    }
+  },
   methods:{
+    pesquisarNome(){
+      fetch(`http://localhost:3000/pokemons?nome_like=${this.pesquisa}`)
+      .then(response => {
+        return response.json()
+      })
+      .then(data=>{
+        this.pokemons = data
+      })
+    },
+
     addHabilit(habilidade){
       if(this.pokemon.habilidades){
       
@@ -167,17 +231,8 @@ export default {
         this.pokemons = data
       })
 
-      this.get()
-      /*
-      const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=150');
-        
-                const data = await response.json();
-        
-                const { name, id, sprites, stats, abilities } = data;
-        
-                const pokemon = { name, id, sprites, stats, abilities };
-        
-                console.log(pokemon)*/
+      //this.get()
+      
       
   }
 }
